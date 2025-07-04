@@ -1,0 +1,181 @@
+/* public/css/prices_style.css */
+
+.container h1 {
+    margin-bottom: 25px;
+}
+
+#priceList li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background-color: #f7f9fc;
+    border: 1px solid #e0e6ea;
+    border-radius: 8px;
+    font-size: 1.05em;
+    flex-wrap: wrap;
+}
+
+#priceList li span {
+    flex-grow: 1;
+    margin-right: 15px;
+    color: #333;
+    font-weight: 500;
+}
+
+.price-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #a8dadc;
+    border-radius: 5px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.price-input-wrapper:focus-within {
+    border-color: #457b9d;
+    box-shadow: 0 0 5px rgba(69, 123, 157, 0.2);
+}
+
+.price-input-wrapper span {
+    padding: 8px 5px 8px 10px;
+    background-color: #e9ecef;
+    border-right: 1px solid #a8dadc;
+    color: #555;
+    font-weight: bold;
+    flex-grow: 0;
+    margin-right: 0;
+}
+
+.price-input {
+    width: 90px;
+    padding: 8px 10px;
+    border: none;
+    font-size: 1em;
+    text-align: right;
+    flex-grow: 1;
+    outline: none;
+    background-color: transparent;
+}
+
+.save-price-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.save-price-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.save-price-btn:active {
+    transform: translateY(0);
+}
+
+.total-section {
+    text-align: right;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+}
+
+#totalPrice {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #28a745;
+    margin-left: 10px;
+}
+
+#backToMainBtn {
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+}
+
+#backToMainBtn:hover {
+    background-color: #5a6268;
+}
+
+.empty-list-message {
+    text-align: center;
+    color: #888;
+    margin-top: 20px;
+    font-style: italic;
+}
+
+/* ==================================== */
+/* MEDIA QUERIES PARA RESPONSIVIDADE   */
+/* ==================================== */
+
+/* Para telas menores que 768px (tablets e smartphones maiores) */
+@media (max-width: 768px) {
+    #priceList li {
+        font-size: 1em; /* Diminui a fonte dos itens da lista */
+        padding: 12px 15px;
+        flex-direction: column; /* Empilha nome do item, input de preço e botão */
+        align-items: flex-start; /* Alinha os itens empilhados ao início */
+        gap: 10px; /* Espaçamento entre os itens empilhados */
+    }
+
+    #priceList li span {
+        width: 100%; /* Nome do item ocupa a largura total */
+        margin-right: 0;
+    }
+
+    .price-input-wrapper {
+        width: 100%; /* Wrapper do input de preço ocupa a largura total */
+        margin-right: 0;
+        justify-content: flex-start; /* Alinha o R$ e input ao início */
+    }
+
+    .price-input-wrapper span {
+        padding: 8px 5px 8px 8px; /* Ajusta o padding do R$ */
+    }
+
+    .price-input {
+        width: auto; /* Deixa o input se ajustar */
+        flex-grow: 1; /* Permite que o input preencha o espaço restante */
+    }
+
+    .save-price-btn {
+        width: 100%; /* Botão salvar ocupa a largura total */
+        padding: 10px 15px;
+        font-size: 0.95em;
+    }
+
+    .total-section {
+        text-align: center; /* Centraliza o total em telas menores */
+    }
+
+    #totalPrice {
+        font-size: 1.5em; /* Diminui a fonte do total */
+    }
+
+    #backToMainBtn {
+        width: 100%; /* Botão voltar ocupa a largura total */
+        padding: 10px 15px;
+        font-size: 0.95em;
+    }
+}
+
+/* Para telas muito pequenas, como smartphones em modo retrato */
+@media (max-width: 480px) {
+    /* As regras de 768px já fazem um bom trabalho de empilhamento.
+       Pode-se adicionar ajustes muito finos aqui se necessário. */
+}

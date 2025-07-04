@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Supermercado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Minha Lista de Supermercado</h1>
+
+        <div class="input-section">
+            <input type="text" id="itemInput" placeholder="Nome do item">
+            <input type="number" id="quantityInput" placeholder="Quantidade" value="1" min="1">
+            <button id="addItemBtn">Adicionar</button>
+        </div>
+
+        <ul id="itemList">
+            </ul>
+
+        <div class="navigation-section">
+            <button id="viewPricesBtn" onclick="location.href='prices.html'">Ver Preços</button>
+            </div>
+
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>
