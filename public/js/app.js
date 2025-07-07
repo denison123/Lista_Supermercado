@@ -1,12 +1,12 @@
 // public/js/app.js
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
     const itemInput = document.getElementById('itemInput');
     const quantityInput = document.getElementById('quantityInput');
     const addItemBtn = document.getElementById('addItemBtn');
     const itemList = document.getElementById('itemList');
     // const clearListBtn = document.getElementById('clearListBtn'); // REMOVIDO: Referência ao botão
 
-    const API_URL = 'http://localhost:3000/api/items';
+    const API_URL = 'https://lista-supermercado-backend.onrender.com/api/items';
 
     // Função para carregar os itens da API
     async function loadItems() {
