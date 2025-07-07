@@ -2,59 +2,75 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') }); // Carrega variáveis de ambiente do arquivo .env
+// Garante que as variáveis de ambiente do .env sejam carregadas
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') }); 
 
-// Usar o cliente MongoDB
-const { MongoClient, ObjectId } = require('mongodb'); // Importa MongoClient e ObjectId
+// Usar o cliente PostgreSQL
+const { Pool } = require('pg');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Usa a porta do ambiente ou 3000
+// Usa a porta definida na variável de ambiente PORT (para deploy) ou 3000 (para local)
+const PORT = process.env.PORT || 3000; 
 
 // Middleware para parsear JSON no corpo das requisições
 app.use(bodyParser.json());
 
 // Habilitar CORS para permitir requisições do frontend
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*'); // EM PRODUÇÃO: Mude * para o domínio do seu frontend (ex: 'https://seufilme.netlify.app')
+    // EM PRODUÇÃO: Mude '*' para o domínio específico do seu frontend (ex: 'https://seulista.netlify.app')
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     next();
 });
 
-// --- Configuração do Banco de Dados MongoDB ---
-const uri = process.env.MONGODB_URI; // Sua string de conexão do MongoDB
-const dbName = 'supermarketDB'; // Nome do seu banco de dados no MongoDB
+// --- Configuração do Banco de Dados PostgreSQL ---
+// A string de conexão é lida da variável de ambiente DATABASE_URL
+const connectionString = process.env.DATABASE_URL;
 
-if (!uri) {
-    console.error('ERRO: A variável de ambiente MONGODB_URI não está definida.');
-    console.error('Por favor, crie/atualize o arquivo .env na raiz do projeto (lista-supermercado-web/) com MONGODB_URI="sua_string_de_conexao_mongodb".');
+if (!connectionString) {
+    console.error('ERRO: A variável de ambiente DATABASE_URL não está definida.');
+    console.error('Por favor, crie/atualize um arquivo .env na raiz do projeto (lista-supermercado-web/) com DATABASE_URL="sua_string_de_conexao_postgresql".');
     process.exit(1); // Encerra o processo se a variável não estiver definida
 }
 
-let db; // Variável global para armazenar a conexão com o banco de dados
-
-async function connectToMongoDB() {
-    try {
-        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-        await client.connect();
-        db = client.db(dbName);
-        console.log('Conectado ao banco de dados MongoDB com sucesso!');
-    } catch (err) {
-        console.error('Erro ao conectar ao MongoDB:', err.message);
-        process.exit(1); // Encerra o processo se não puder conectar ao DB
+const pool = new Pool({
+    connectionString: connectionString,
+    // Esta configuração SSL é importante para conexões com bancos de dados na nuvem (como Render)
+    // Em ambiente local, você pode não precisar dela ou pode configurá-la para 'false'
+    // Em produção, 'rejectUnauthorized: false' pode ser necessário se o certificado não for validado
+    ssl: {
+        rejectUnauthorized: false 
     }
-}
-
-// Chamar a função de conexão ao iniciar o servidor
-connectToMongoDB();
-
-// Middleware para garantir que a conexão com o DB esteja pronta antes das rotas
-app.use((req, res, next) => {
-    if (!db) {
-        return res.status(503).json({ error: 'Servidor indisponível, banco de dados não conectado.' });
-    }
-    next();
 });
+
+// Conectar ao banco de dados e criar a tabela se não existir
+pool.connect()
+    .then(client => {
+        console.log('Conectado ao banco de dados PostgreSQL.');
+        // Cria a tabela 'items' com id, name, quantity e price
+        return client.query(`
+            CREATE TABLE IF NOT EXISTS items (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                quantity INTEGER NOT NULL DEFAULT 1,
+                price NUMERIC(10, 2) DEFAULT 0.00
+            );
+        `)
+        .then(() => {
+            console.log('Tabela "items" verificada/criada com campo de quantidade e preço.');
+            client.release(); // Libera o cliente de volta para o pool
+        })
+        .catch(err => {
+            console.error('Erro ao criar tabela de itens:', err.message);
+            client.release();
+            process.exit(1); 
+        });
+    })
+    .catch(err => {
+        console.error('Erro ao conectar ao banco de dados PostgreSQL:', err.message);
+        process.exit(1); 
+    });
 
 
 // --- Rotas da API RESTful ---
@@ -62,10 +78,10 @@ app.use((req, res, next) => {
 // Rota para obter todos os itens
 app.get('/api/items', async (req, res) => {
     try {
-        const items = await db.collection('items').find({}).toArray();
-        res.json(items);
+        const result = await pool.query('SELECT id, name, quantity, price FROM items ORDER BY id ASC');
+        res.json(result.rows);
     } catch (err) {
-        console.error('Erro ao obter itens do MongoDB:', err.message);
+        console.error('Erro ao obter itens:', err.message);
         res.status(500).json({ error: 'Erro ao obter itens do banco de dados.' });
     }
 });
@@ -79,18 +95,16 @@ app.post('/api/items', async (req, res) => {
     const parsedQuantity = parseInt(quantity);
     const parsedPrice = parseFloat(price || 0.0);
 
-    const newItem = {
-        name: name,
-        quantity: parsedQuantity,
-        price: parsedPrice
-    };
-
     try {
-        const result = await db.collection('items').insertOne(newItem);
-        // MongoDB retorna _id, que precisa ser mapeado para 'id' para o frontend
-        res.status(201).json({ id: result.insertedId, ...newItem });
+        // $1, $2, $3 são placeholders para os parâmetros no pg
+        const result = await pool.query(
+            'INSERT INTO items (name, quantity, price) VALUES ($1, $2, $3) RETURNING id, name, quantity, price',
+            [name, parsedQuantity, parsedPrice]
+        );
+        // RETURNING id, name, quantity, price retorna o item inserido com o ID gerado
+        res.status(201).json(result.rows[0]);
     } catch (err) {
-        console.error('Erro ao adicionar item ao MongoDB:', err.message);
+        console.error('Erro ao adicionar item:', err.message);
         res.status(500).json({ error: 'Erro ao adicionar item ao banco de dados.' });
     }
 });
@@ -100,51 +114,49 @@ app.put('/api/items/:id', async (req, res) => {
     const { id } = req.params;
     const { name, quantity, price } = req.body;
 
-    // Converte o ID da string para ObjectId do MongoDB
-    if (!ObjectId.isValid(id)) {
-        return res.status(400).json({ error: 'ID de item inválido.' });
-    }
-    const objectId = new ObjectId(id);
-
-    let updateFields = {};
+    let updates = [];
+    let params = [];
+    let paramIndex = 1; // Índice para os placeholders ($1, $2, etc.)
 
     if (name !== undefined) {
-        updateFields.name = name;
+        updates.push(`name = $${paramIndex++}`);
+        params.push(name);
     }
     if (quantity !== undefined) {
         const parsedQuantity = parseInt(quantity);
         if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
             return res.status(400).json({ error: 'Quantidade inválida.' });
         }
-        updateFields.quantity = parsedQuantity;
+        updates.push(`quantity = $${paramIndex++}`);
+        params.push(parsedQuantity);
     }
     if (price !== undefined) {
         const parsedPrice = parseFloat(price);
         if (isNaN(parsedPrice) || parsedPrice < 0) {
             return res.status(400).json({ error: 'Preço inválido.' });
         }
-        updateFields.price = parsedPrice;
+        updates.push(`price = $${paramIndex++}`);
+        params.push(parsedPrice);
     }
 
-    if (Object.keys(updateFields).length === 0) {
+    if (updates.length === 0) {
         return res.status(400).json({ error: 'Nenhum campo para atualizar fornecido.' });
     }
 
-    try {
-        const result = await db.collection('items').updateOne(
-            { _id: objectId },
-            { $set: updateFields }
-        );
+    params.push(id); // Adiciona o ID como o último parâmetro para a cláusula WHERE
 
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ message: 'Item não encontrado.' });
+    // A cláusula WHERE usa o último parâmetro adicionado (o ID)
+    const sql = `UPDATE items SET ${updates.join(', ')} WHERE id = $${paramIndex}`;
+
+    try {
+        const result = await pool.query(sql, params);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Item não encontrado ou nenhum dado alterado.' });
         }
-        if (result.modifiedCount === 0 && result.matchedCount > 0) {
-            return res.status(200).json({ message: 'Item encontrado, mas nenhum dado alterado (valores são os mesmos).' });
-        }
-        res.json({ message: 'Item atualizado com sucesso!', id: id, changes: result.modifiedCount });
+        res.json({ message: 'Item atualizado com sucesso!', id: id, changes: result.rowCount });
     } catch (err) {
-        console.error('Erro ao atualizar item no MongoDB:', err.message);
+        console.error('Erro ao atualizar item:', err.message);
         res.status(500).json({ error: 'Erro ao atualizar item no banco de dados.' });
     }
 });
@@ -153,27 +165,21 @@ app.put('/api/items/:id', async (req, res) => {
 // Rota para remover um item
 app.delete('/api/items/:id', async (req, res) => {
     const { id } = req.params;
-
-    // Converte o ID da string para ObjectId do MongoDB
-    if (!ObjectId.isValid(id)) {
-        return res.status(400).json({ error: 'ID de item inválido.' });
-    }
-    const objectId = new ObjectId(id);
-
     try {
-        const result = await db.collection('items').deleteOne({ _id: objectId });
-        if (result.deletedCount === 0) {
+        const result = await pool.query('DELETE FROM items WHERE id = $1', [id]);
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: 'Item não encontrado.' });
         }
         res.json({ message: 'Item removido com sucesso!', id });
     } catch (err) {
-        console.error('Erro ao remover item do MongoDB:', err.message);
+        console.error('Erro ao remover item:', err.message);
         res.status(500).json({ error: 'Erro ao remover item do banco de dados.' });
     }
 });
 
 
 // Servir arquivos estáticos do Frontend
+// Aponta para a pasta 'public' na raiz do projeto
 app.use(express.static(path.join(__dirname, '../../public')));
 
 // Iniciar o Servidor
