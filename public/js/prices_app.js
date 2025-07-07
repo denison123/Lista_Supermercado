@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const priceList = document.getElementById('priceList');
     const totalPriceSpan = document.getElementById('totalPrice');
-    const API_URL = 'http://localhost:3000/api/items';
+    const API_URL = 'https://lista-supermercado-backend.onrender.com/api/items';
 
     let allItems = [];
 
