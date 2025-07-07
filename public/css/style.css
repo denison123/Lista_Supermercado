@@ -125,7 +125,40 @@ h1 {
     word-break: break-word;
 }
 
-/* Estilo para o botão remover */
+/* NOVO ESTILO: Wrapper para o ícone de remover */
+.remove-icon-wrapper {
+    margin-left: 15px;
+    cursor: pointer;
+    padding: 5px; /* Área de clique maior */
+    border-radius: 50%; /* Para um fundo arredondado no hover */
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: flex; /* Para centralizar o SVG */
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* Não encolherá */
+}
+
+.remove-icon-wrapper:hover {
+    background-color: rgba(231, 76, 60, 0.1); /* Um vermelho claro no hover */
+    transform: scale(1.1); /* Pequeno zoom no hover */
+}
+
+.remove-icon-wrapper:active {
+    transform: scale(1);
+}
+
+/* NOVO ESTILO: O ícone SVG em si */
+.remove-icon {
+    width: 24px; /* Tamanho do ícone */
+    height: 24px;
+    color: #e74c3c; /* Cor vermelha para o X */
+    stroke-width: 2; /* Espessura da linha do X */
+    stroke: currentColor; /* Usa a cor definida acima */
+    fill: none; /* Não preenche o ícone */
+}
+
+/* Estilo para o botão remover - REMOVIDO */
+/*
 #itemList li button {
     background-color: #e74c3c;
     color: white;
@@ -148,6 +181,7 @@ h1 {
 #itemList li button:active {
     transform: scale(1);
 }
+*/
 
 /* Estilo para a nova seção de navegação na página principal */
 .navigation-section {
@@ -183,7 +217,8 @@ h1 {
     transform: translateY(0);
 }
 
-/* Estilo para o botão "Limpar Lista" */
+/* Estilo para o botão "Limpar Lista" - REMOVIDO */
+/*
 #clearListBtn {
     padding: 10px 20px;
     background-color: #e74c3c;
@@ -204,6 +239,7 @@ h1 {
 #clearListBtn:active {
     transform: translateY(0);
 }
+*/
 
 .empty-list-message {
     text-align: center;
@@ -230,55 +266,61 @@ h1 {
 /* Para telas menores que 768px (tablets e smartphones maiores) */
 @media (max-width: 768px) {
     body {
-        padding: 15px; /* Reduz o padding geral do corpo */
+        padding: 15px;
     }
 
     .container {
-        padding: 20px; /* Reduz o padding do container */
-        margin-top: 30px; /* Reduz a margem superior */
+        padding: 20px;
+        margin-top: 30px;
     }
 
     h1 {
-        font-size: 1.8em; /* Diminui o tamanho do título */
+        font-size: 1.8em;
         margin-bottom: 20px;
     }
 
     .input-section {
-        flex-direction: column; /* Empilha os inputs e o botão verticalmente */
-        align-items: stretch; /* Estica os itens para a largura total */
-        gap: 10px; /* Reduz o espaçamento entre os itens empilhados */
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
     }
 
     #itemInput,
     #quantityInput,
     #addItemBtn {
-        width: 100%; /* Faz com que ocupem a largura total */
-        font-size: 1em; /* Diminui a fonte dos inputs e do botão */
+        width: 100%;
+        font-size: 1em;
         padding: 10px 12px;
     }
 
     #quantityInput {
-        text-align: left; /* Alinha o texto da quantidade à esquerda quando em largura total */
+        text-align: left;
     }
 
     #itemList li {
-        font-size: 1em; /* Diminui a fonte dos itens da lista */
+        font-size: 1em;
         padding: 12px 15px;
     }
 
-    #itemList li button {
-        padding: 7px 10px; /* Diminui o botão remover */
-        font-size: 0.85em;
+    /* Ajuste para o ícone de remover em telas menores */
+    .remove-icon-wrapper {
+        margin-left: auto; /* Empurra para a direita */
+        padding: 8px; /* Aumenta a área de toque */
+    }
+
+    .remove-icon {
+        width: 20px; /* Diminui um pouco o ícone */
+        height: 20px;
     }
 
     .navigation-section {
-        flex-direction: column; /* Empilha os botões de navegação */
+        flex-direction: column;
         gap: 10px;
     }
 
     #viewPricesBtn,
     #clearListBtn {
-        width: 100%; /* Faz com que os botões de navegação ocupem a largura total */
+        width: 100%;
         padding: 10px 15px;
         font-size: 0.95em;
     }
@@ -293,7 +335,7 @@ h1 {
     .container {
         padding: 15px;
         margin-top: 20px;
-        border-radius: 8px; /* Cantos um pouco menos arredondados */
+        border-radius: 8px;
     }
 
     h1 {
@@ -302,19 +344,20 @@ h1 {
     }
 
     #itemList li {
-        flex-direction: column; /* Empilha nome do item e botão remover */
-        align-items: flex-start; /* Alinha os itens empilhados ao início */
-        gap: 8px; /* Espaço entre os itens empilhados */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
         padding: 10px 12px;
     }
 
     #itemList li span {
-        width: 100%; /* Ocupa a largura total */
+        width: 100%;
         margin-right: 0;
     }
 
-    #itemList li button {
-        width: 100%; /* Ocupa a largura total */
+    .remove-icon-wrapper {
+        width: 100%; /* Ocupa a largura total para toque fácil */
         margin-left: 0;
+        justify-content: flex-end; /* Alinha o X para a direita */
     }
 }

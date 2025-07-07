@@ -1,27 +1,26 @@
 // public/js/app.js
-    document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     const itemInput = document.getElementById('itemInput');
     const quantityInput = document.getElementById('quantityInput');
     const addItemBtn = document.getElementById('addItemBtn');
     const itemList = document.getElementById('itemList');
-    // const clearListBtn = document.getElementById('clearListBtn'); // REMOVIDO: Referência ao botão
+    // const clearListBtn = document.getElementById('clearListBtn'); // Botão Limpar Lista removido anteriormente
 
-    const API_URL = 'https://lista-supermercado-backend.onrender.com/api/items';
-                    
+    const API_URL = 'https://lista-supermercado-backend.onrender.com/api/items'; // Certifique-se de que esta URL está correta!
 
     // Função para carregar os itens da API
     async function loadItems() {
         try {
             const response = await fetch(API_URL);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+                throw new Error(`HTTP error! status: ${response.status} - ${errorData.error || errorData.message}`);
             }
             const items = await response.json();
             renderItems(items);
-        }
-        catch (error) {
+        } catch (error) {
             console.error('Erro ao carregar itens:', error);
-            alert('Erro ao carregar a lista de compras. Verifique se o servidor está rodando.');
+            alert(`Erro ao carregar a lista de compras: ${error.message}. Verifique se o servidor está rodando.`);
         }
     }
 
@@ -30,17 +29,23 @@
         itemList.innerHTML = '';
         if (items.length === 0) {
             itemList.innerHTML = '<p class="empty-list-message">Sua lista está vazia. Adicione alguns itens!</p>';
-            // clearListBtn.style.display = 'none'; // REMOVIDO: Lógica de esconder o botão
+            // clearListBtn.style.display = 'none'; // Lógica de esconder o botão removida
         } else {
             items.forEach(item => {
                 const li = document.createElement('li');
+                li.dataset.id = item.id; // Armazena o ID do item no elemento li
+
                 li.innerHTML = `
                     <span>${item.quantity}x ${item.name}</span>
-                    <button data-id="${item.id}">Remover</button>
+                    <div class="remove-icon-wrapper" data-id="${item.id}">
+                        <svg class="remove-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
                 `;
                 itemList.appendChild(li);
             });
-            // clearListBtn.style.display = 'inline-block'; // REMOVIDO: Lógica de mostrar o botão
+            // clearListBtn.style.display = 'inline-block'; // Lógica de mostrar o botão removida
         }
     }
 
@@ -82,7 +87,7 @@
     // Função para remover um item
     async function removeItem(id) {
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL.replace('/api/items', `/api/items/${id}`)}`, { // Ajusta a URL para DELETE
                 method: 'DELETE',
             });
             if (!response.ok) {
@@ -94,30 +99,6 @@
             alert('Erro ao remover item. Tente novamente mais tarde.');
         }
     }
-
-    // REMOVIDO: Função clearAllItems
-    /*
-    async function clearAllItems() {
-        if (!confirm('Tem certeza que deseja limpar TODA a lista de supermercado? Esta ação é irreversível!')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/all`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            alert('Lista limpa com sucesso!');
-            loadItems();
-        } catch (error) {
-            console.error('Erro ao limpar a lista:', error);
-            alert('Erro ao limpar a lista. Tente novamente mais tarde.');
-        }
-    }
-    */
 
     // Event Listeners
     addItemBtn.addEventListener('click', addItem);
@@ -132,17 +113,17 @@
         }
     });
 
+    // Event listener para o ícone de remover
     itemList.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            const itemId = e.target.dataset.id;
+        // Verifica se o clique foi no wrapper do ícone ou no próprio SVG/path
+        const removeWrapper = e.target.closest('.remove-icon-wrapper');
+        if (removeWrapper) {
+            const itemId = removeWrapper.dataset.id;
             if (confirm('Tem certeza que deseja remover este item?')) {
                 removeItem(itemId);
             }
         }
     });
-
-    // REMOVIDO: Event listener para o botão de limpar
-    // clearListBtn.addEventListener('click', clearAllItems);
 
     // Carrega os itens ao iniciar
     loadItems();
